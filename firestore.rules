@@ -1,0 +1,89 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: players
+    // Document ID: {playerId} (Must match uid)
+    // Fields:
+    //   - uid: string (required, immutable) - The Firebase Auth UID of the player.
+    //   - displayName: string (optional, max 50 chars) - The player's display name.
+    //   - gameName: string (optional, 1-20 chars) - The player's custom in-game name.
+    //   - gender: string (optional, 'male' or 'female') - The player's gender.
+    //   - appearance: string (optional, max 500 chars) - The player's appearance description.
+    //   - credits: number (optional) - Player's virtual currency.
+    //   - totalWorks: number (optional) - Total number of times worked.
+    //   - dailyWorks: number (optional) - Number of times worked today.
+    //   - lastWorkDate: string (optional) - Date string of last work.
+    //   - jobTitle: string (optional) - Player's current job title.
+    //   - workHistory: list (optional) - History of work descriptions.
+    //   - inventory: list (optional) - Player's inventory of items.
+    //   - npcRelationships: map (optional) - Player's relationships with NPCs.
+    //   - createdAt: timestamp (required, immutable) - When the player profile was created.
+    //   - lastLoginAt: timestamp (optional) - When the player last logged in.
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+    
+    function areImmutableFieldsUnchanged(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
+    
+    function isValidPlayerProfile(data) {
+      return hasOnlyAllowedFields(['uid', 'displayName', 'gameName', 'gender', 'appearance', 'credits', 'totalWorks', 'dailyWorks', 'lastWorkDate', 'jobTitle', 'workHistory', 'inventory', 'npcRelationships', 'companions', 'createdAt', 'lastLoginAt', 'userGeminiApiKey']) &&
+             data.uid is string && data.uid == request.auth.uid &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 50)) &&
+             (!('gameName' in data) || (data.gameName is string && data.gameName.size() >= 1 && data.gameName.size() <= 20)) &&
+             (!('gender' in data) || (data.gender in ['male', 'female'])) &&
+             (!('appearance' in data) || (data.appearance is string && data.appearance.size() <= 500)) &&
+             (!('credits' in data) || data.credits is number) &&
+             (!('totalWorks' in data) || data.totalWorks is number) &&
+             (!('dailyWorks' in data) || data.dailyWorks is number) &&
+             (!('lastWorkDate' in data) || data.lastWorkDate is string) &&
+             (!('jobTitle' in data) || data.jobTitle is string) &&
+             (!('workHistory' in data) || data.workHistory is list) &&
+             (!('inventory' in data) || data.inventory is list) &&
+             (!('npcRelationships' in data) || data.npcRelationships is map) &&
+             (!('companions' in data) || data.companions is map) &&
+             (!('userGeminiApiKey' in data) || (data.userGeminiApiKey is string && data.userGeminiApiKey.size() <= 100)) &&
+             data.createdAt is timestamp &&
+             (!('lastLoginAt' in data) || data.lastLoginAt is timestamp);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /players/{playerId} {
+      allow read: if isOwner(playerId);
+      
+      allow create: if isOwner(playerId) && 
+                    isValidPlayerProfile(request.resource.data) &&
+                    request.resource.data.uid == playerId;
+                    
+      allow update: if isOwner(playerId) && 
+                    isValidPlayerProfile(request.resource.data) &&
+                    areImmutableFieldsUnchanged(['uid', 'createdAt']);
+                    
+      allow delete: if false;
+    }
+  }
+}

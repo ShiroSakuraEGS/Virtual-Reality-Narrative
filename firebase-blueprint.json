@@ -1,0 +1,129 @@
+{
+  "entities": {
+    "PlayerProfile": {
+      "title": "Player Profile",
+      "description": "Basic profile for a game player.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "The Firebase Auth UID of the player."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "The player's display name."
+        },
+        "gameName": {
+          "type": "string",
+          "description": "The player's custom in-game name."
+        },
+        "gender": {
+          "type": "string",
+          "enum": ["male", "female"],
+          "description": "The player's gender."
+        },
+        "appearance": {
+          "type": "string",
+          "description": "The player's appearance description."
+        },
+        "credits": {
+          "type": "number",
+          "description": "Player's virtual currency."
+        },
+        "totalWorks": {
+          "type": "number",
+          "description": "Total number of times the player has worked."
+        },
+        "dailyWorks": {
+          "type": "number",
+          "description": "Number of times worked today."
+        },
+        "lastWorkDate": {
+          "type": "string",
+          "description": "Date string (YYYY-MM-DD) of the last work in Asia/Taipei timezone."
+        },
+        "jobTitle": {
+          "type": "string",
+          "description": "Player's current job title."
+        },
+        "workHistory": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "History of work descriptions."
+        },
+        "inventory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "itemName": { "type": "string" },
+              "quantity": { "type": "number" },
+              "description": { "type": "string" }
+            }
+          },
+          "description": "Player's inventory of items."
+        },
+        "npcRelationships": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "tradeCount": { "type": "number" }
+            }
+          },
+          "description": "Player's relationships with NPCs."
+        },
+        "companions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "personality": { "type": "string" },
+              "occupation": { "type": "string" },
+              "intimacyLevel": { "type": "number" },
+              "chatCount": { "type": "number" },
+              "isDefined": { "type": "boolean" },
+              "chatHistory": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "role": { "type": "string" },
+                    "content": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "description": "Player's dynamic companions."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the player profile was created."
+        },
+        "lastLoginAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the player last logged in."
+        },
+        "userGeminiApiKey": {
+          "type": "string",
+          "description": "The user's own Gemini API key."
+        }
+      },
+      "required": ["uid", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/players/{playerId}": {
+      "schema": {
+        "$ref": "#/entities/PlayerProfile"
+      },
+      "description": "Stores player profiles."
+    }
+  }
+}
